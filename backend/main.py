@@ -35,6 +35,9 @@ async def lifespan(app: FastAPI):
     """Loads singleton Keras model ONLY ONCE on server startup and initializes SQLite DB."""
     print("Initializing FastAPI server lifespan & SQLite database...")
     try:
+        # Download model from Google Drive if running on Railway (model not in git)
+        import download_model
+        download_model.download_model_if_missing()
         database.init_db()
         model_service.load_singleton_model()
     except Exception as e:
