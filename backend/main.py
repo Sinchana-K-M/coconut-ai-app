@@ -28,7 +28,7 @@ import batch_service
 import report_service
 import excel_service
 import notification_service
-from model_comparison import compare_models
+import model_comparison
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -334,7 +334,7 @@ async def get_fungal_alerts():
 @app.get("/api/model-comparison")
 async def get_model_comparison():
     """Returns objective metrics comparing MobileNetV2 vs Random Forest vs SVM."""
-    return compare_models.get_model_comparison_metrics()
+    return model_comparison.get_model_comparison_metrics()
 
 
 @app.get("/api/model-info")
