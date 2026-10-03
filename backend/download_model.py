@@ -2,87 +2,136 @@
 download_model.py
 =================
 Downloads the Keras model from Google Drive on Railway startup.
-Handles Google Drive's virus-scan confirmation for larger files.
+Uses multiple strategies to handle Google Drive's download quirks.
 """
 
 import os
 import sys
 import urllib.request
 import urllib.parse
+import urllib.error
+import http.cookiejar
 
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BACKEND_DIR, "coconut_fungal_model_v2.keras")
+ROOT_DIR    = os.path.dirname(BACKEND_DIR)
+
+# Save model to backend directory (model_service.py checks here first)
+MODEL_SAVE_PATH = os.path.join(BACKEND_DIR, "coconut_fungal_model_v2.keras")
+
+# Google Drive file ID from environment or hardcoded
 FILE_ID = os.environ.get("GDRIVE_FILE_ID", "1fkSYU6KZJ8d4uyieczRBlwUfwZTVhsD1")
 
-def get_confirm_token(response):
-    """Extract Google Drive download confirmation token from cookies."""
-    for key, value in response.info().items():
-        if key.lower() == 'set-cookie':
-            for part in value.split(';'):
+MIN_VALID_SIZE_BYTES = 1 * 1024 * 1024  # 1 MB minimum — avoids saving HTML error pages
+
+
+def _build_opener_with_cookies():
+    cj = http.cookiejar.CookieJar()
+    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+    opener.addheaders = [
+        ('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'),
+        ('Accept', '*/*'),
+    ]
+    return opener, cj
+
+
+def _get_confirm_token(response):
+    """Check response headers / body for Google's virus-scan warning token."""
+    for header_key, header_val in response.headers.items():
+        if header_key.lower() == 'set-cookie' and 'download_warning' in header_val:
+            for part in header_val.split(';'):
                 part = part.strip()
                 if part.startswith('download_warning'):
-                    return part.split('=')[1]
+                    return part.split('=', 1)[1]
     return None
 
-def download_model_if_missing():
-    """Downloads the Keras model from Google Drive if not already present."""
-    if os.path.exists(MODEL_PATH):
-        size_mb = os.path.getsize(MODEL_PATH) / (1024 * 1024)
-        print(f"[download_model] Model already exists ({size_mb:.1f} MB) — skipping download.")
-        return True
 
-    print(f"[download_model] Model not found. Downloading from Google Drive...")
-    print(f"[download_model] File ID: {FILE_ID}")
-    print(f"[download_model] Saving to: {MODEL_PATH}")
+def _save_response_to_file(response, dest_path):
+    """Stream response to disk in 1MB chunks and return total bytes written."""
+    chunk_size = 1024 * 1024  # 1 MB
+    total = 0
+    with open(dest_path, 'wb') as f:
+        while True:
+            chunk = response.read(chunk_size)
+            if not chunk:
+                break
+            f.write(chunk)
+            total += len(chunk)
+            mb = total / (1024 * 1024)
+            print(f"\r[download_model] {mb:.1f} MB downloaded...", end="", flush=True)
+    print()
+    return total
 
+
+def download_from_gdrive(file_id, dest_path):
+    """Download a Google Drive file, handling the virus-scan confirmation page."""
+    opener, _ = _build_opener_with_cookies()
+    urllib.request.install_opener(opener)
+
+    # First request — may trigger virus-scan warning
+    url1 = f"https://drive.google.com/uc?export=download&id={file_id}"
+    print(f"[download_model] Connecting to Google Drive (file_id={file_id})...")
     try:
-        os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
-
-        # Step 1: Initial request to Google Drive
-        url = f"https://drive.google.com/uc?export=download&id={FILE_ID}"
-        opener = urllib.request.build_opener()
-        opener.addheaders = [('User-Agent', 'Mozilla/5.0')]
-        urllib.request.install_opener(opener)
-
-        response = urllib.request.urlopen(url)
-        token = get_confirm_token(response)
-
-        # Step 2: If virus scan warning, add confirm token
-        if token:
-            print(f"[download_model] Got confirm token, resuming download...")
-            url = f"https://drive.google.com/uc?export=download&id={FILE_ID}&confirm={token}"
-            response = urllib.request.urlopen(url)
-
-        # Step 3: Save to disk
-        chunk_size = 1024 * 1024  # 1MB chunks
-        downloaded = 0
-        with open(MODEL_PATH, 'wb') as f:
-            while True:
-                chunk = response.read(chunk_size)
-                if not chunk:
-                    break
-                f.write(chunk)
-                downloaded += len(chunk)
-                print(f"\r[download_model] Downloaded: {downloaded / (1024*1024):.1f} MB", end="", flush=True)
-
-        print(f"\n[download_model] Download complete!")
-        size_mb = os.path.getsize(MODEL_PATH) / (1024 * 1024)
-        print(f"[download_model] Model saved: {size_mb:.1f} MB at {MODEL_PATH}")
-
-        if size_mb < 1.0:
-            print("[download_model] WARNING: File too small — may be an error page, not the model.")
-            os.remove(MODEL_PATH)
-            return False
-
-        return True
-
-    except Exception as e:
-        print(f"\n[download_model] ERROR: Download failed: {e}")
-        if os.path.exists(MODEL_PATH):
-            os.remove(MODEL_PATH)
+        resp1 = opener.open(url1, timeout=60)
+    except urllib.error.URLError as e:
+        print(f"[download_model] Connection error: {e}")
         return False
+
+    token = _get_confirm_token(resp1)
+
+    if token:
+        # Second request with confirmation token
+        print(f"[download_model] Virus-scan confirmation required, retrying with token...")
+        url2 = f"https://drive.google.com/uc?export=download&id={file_id}&confirm={token}&uuid=1"
+        try:
+            resp2 = opener.open(url2, timeout=300)
+        except urllib.error.URLError as e:
+            print(f"[download_model] Download error: {e}")
+            return False
+        total = _save_response_to_file(resp2, dest_path)
+    else:
+        # No confirmation needed — direct download
+        total = _save_response_to_file(resp1, dest_path)
+
+    if total < MIN_VALID_SIZE_BYTES:
+        print(f"[download_model] ERROR: Downloaded only {total} bytes — likely an HTML error page, not the model.")
+        os.remove(dest_path)
+        return False
+
+    print(f"[download_model] Download complete — {total / (1024*1024):.1f} MB saved to {dest_path}")
+    return True
+
+
+def download_model_if_missing():
+    """
+    Main entry point. Downloads the Keras model from Google Drive
+    if it does not already exist at MODEL_SAVE_PATH.
+    """
+    if os.path.exists(MODEL_SAVE_PATH):
+        size_mb = os.path.getsize(MODEL_SAVE_PATH) / (1024 * 1024)
+        if size_mb >= 1.0:
+            print(f"[download_model] Model already exists ({size_mb:.1f} MB) — skipping download.")
+            return True
+        else:
+            print(f"[download_model] Existing file too small ({size_mb:.1f} MB) — re-downloading...")
+            os.remove(MODEL_SAVE_PATH)
+
+    print(f"[download_model] Model not found at {MODEL_SAVE_PATH}")
+    print(f"[download_model] Downloading from Google Drive...")
+
+    os.makedirs(os.path.dirname(MODEL_SAVE_PATH), exist_ok=True)
+
+    success = download_from_gdrive(FILE_ID, MODEL_SAVE_PATH)
+
+    if success:
+        mb = os.path.getsize(MODEL_SAVE_PATH) / (1024 * 1024)
+        print(f"[download_model] Model ready: {mb:.1f} MB at {MODEL_SAVE_PATH}")
+    else:
+        print("[download_model] FAILED: Model could not be downloaded.")
+        print("[download_model] The prediction endpoint will not work without the model.")
+
+    return success
 
 
 if __name__ == "__main__":
-    success = download_model_if_missing()
-    sys.exit(0 if success else 1)
+    ok = download_model_if_missing()
+    sys.exit(0 if ok else 1)
