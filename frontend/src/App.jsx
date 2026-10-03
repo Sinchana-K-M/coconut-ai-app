@@ -198,12 +198,8 @@ export default function App() {
 
             {predictionResult && (
               <>
-                <QualityGrade
-                  qualityScore={predictionResult.quality_score}
-                  grade={predictionResult.quality_grade}
-                  gradeLabel={predictionResult.quality_grade_label}
-                  factors={predictionResult.quality_factors}
-                />
+                <QualityGrade result={predictionResult} />
+
                 <FinancialYieldCard yieldData={predictionResult.yield_analysis} />
                 <MoldTreatmentCard moldData={predictionResult.mold_analysis} isFungal={predictionResult.prediction === 'FUNGAL'} />
               </>
@@ -244,12 +240,8 @@ export default function App() {
 
             {predictionResult && (
               <>
-                <QualityGrade
-                  qualityScore={predictionResult.quality_score}
-                  grade={predictionResult.quality_grade}
-                  gradeLabel={predictionResult.quality_grade_label}
-                  factors={predictionResult.quality_factors}
-                />
+                <QualityGrade result={predictionResult} />
+
                 <FinancialYieldCard yieldData={predictionResult.yield_analysis} />
                 <MoldTreatmentCard moldData={predictionResult.mold_analysis} isFungal={predictionResult.prediction === 'FUNGAL'} />
               </>
@@ -290,19 +282,14 @@ export default function App() {
         {/* TAB 7: STANDALONE QUALITY ASSESSMENT */}
         {activeTab === 'quality' && (
           <div>
-            <QualityGrade
-              qualityScore={predictionResult?.quality_score || 85.0}
-              grade={predictionResult?.quality_grade || 'A'}
-              gradeLabel={predictionResult?.quality_grade_label || 'High Quality'}
-              factors={predictionResult?.quality_factors || {
-                brightness: 92.0,
-                contrast: 88.0,
-                sharpness: 95.0,
-                blur: 94.0,
-                color_consistency: 89.0,
-                clarity: 91.0
-              }}
-            />
+            <QualityGrade result={predictionResult || {
+              quality_score: 85.0,
+              quality_grade: 'A',
+              quality_grade_label: 'High Quality',
+              quality_factors: { brightness: 92.0, contrast: 88.0, sharpness: 95.0, blur: 94.0, color_consistency: 89.0, clarity: 91.0 },
+              prediction: 'HEALTHY'
+            }} />
+
           </div>
         )}
 

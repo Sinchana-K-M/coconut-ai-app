@@ -28,20 +28,47 @@ def run_prediction_pipeline(image_bytes: bytes, filename: str, opacity=0.45, thr
     raw_prediction = model.predict(img_batch, verbose=0)[0][0]
     raw_score = float(raw_prediction)
 
+    # Confidence thresholds
+    # raw_score >= 0.5  → HEALTHY  (closer to 1.0 = more confident)
+    # raw_score < 0.5   → FUNGAL   (closer to 0.0 = more confident)
+    # raw_score 0.35–0.65 → LOW CONFIDENCE zone (borderline / ambiguous image)
+    LOW_CONF_LOW  = 0.35   # below 0.5: borderline fungal
+    LOW_CONF_HIGH = 0.65   # above 0.5: borderline healthy
+
     if raw_score >= 0.5:
         prediction = "HEALTHY"
         confidence = raw_score * 100.0
-        explanation = "The system did not detect significant visual indicators of fungal contamination."
+        if raw_score < LOW_CONF_HIGH:
+            explanation = (
+                "LOW CONFIDENCE: The image shows borderline visual features. "
+                "The model leans toward Healthy but the result is uncertain. "
+                "Please use a clearer image or expert inspection for confirmation."
+            )
+            low_confidence_warning = True
+        else:
+            explanation = "The system did not detect significant visual indicators of fungal contamination."
+            low_confidence_warning = False
     else:
         prediction = "FUNGAL"
         confidence = (1.0 - raw_score) * 100.0
-        explanation = "The system detected visual patterns associated with fungal contamination."
+        if raw_score > LOW_CONF_LOW:
+            explanation = (
+                "LOW CONFIDENCE: The image shows borderline visual features. "
+                "The model leans toward Fungal but the result is uncertain. "
+                "Please use a clearer image or expert inspection for confirmation."
+            )
+            low_confidence_warning = True
+        else:
+            explanation = "The system detected visual patterns associated with fungal contamination."
+            low_confidence_warning = False
 
     confidence = float(confidence)
 
-    # Run image quality grading
+
+    # Run image quality grading — pass ML prediction so fungal → always Grade C
     grader = quality_grading.CoconutQualityGrader()
-    quality_res = grader.analyze(orig_pil)
+    quality_res = grader.analyze(orig_pil, prediction=prediction)
+
 
     # Run financial yield & economic loss calculation
     calc = yield_calculator.FinancialYieldCalculator()
@@ -78,6 +105,7 @@ def run_prediction_pipeline(image_bytes: bytes, filename: str, opacity=0.45, thr
         "prediction": prediction,
         "confidence": round(confidence, 2),
         "raw_score": raw_score,
+        "low_confidence_warning": low_confidence_warning,
         "explanation": explanation,
         "filename": filename,
         "model": "MobileNetV2-V2",
@@ -101,3 +129,4 @@ def run_prediction_pipeline(image_bytes: bytes, filename: str, opacity=0.45, thr
             "stage4_info": "MobileNetV2 Preprocessing Applied [-1, 1]"
         }
     }
+

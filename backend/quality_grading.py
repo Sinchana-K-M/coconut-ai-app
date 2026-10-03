@@ -3,14 +3,24 @@ from PIL import Image
 
 class CoconutQualityGrader:
     """
-    Computer Vision based Quality Scoring Module.
-    Calculates reproducible quality scores (0-100) based on measurable image characteristics:
-    - Brightness / Exposure (15%)
-    - Contrast (15%)
-    - Sharpness (20%)
-    - Blur Level (20%)
-    - Color Consistency (15%)
-    - Visible Image Clarity (15%)
+    Coconut Quality Grading Module.
+
+    IMPORTANT — Two separate concepts:
+    ─────────────────────────────────
+    1. IMAGE QUALITY SCORE (0-100): How clear/sharp/bright the photo is.
+       Grade A/B/C based purely on image characteristics.
+
+    2. COCONUT QUALITY GRADE: Final grade that accounts for ML prediction.
+       - FUNGAL coconuts are ALWAYS Grade C (contaminated = low quality).
+       - HEALTHY coconuts get A/B/C based on image quality score.
+
+    Weights:
+    - Brightness / Exposure  : 15%
+    - Contrast               : 15%
+    - Sharpness              : 20%
+    - Blur Level             : 20%
+    - Color Consistency      : 15%
+    - Visible Image Clarity  : 15%
     """
 
     def __init__(self, weights=None, thresholds=None):
@@ -22,16 +32,22 @@ class CoconutQualityGrader:
             "color_consistency": 0.15,
             "clarity": 0.15
         }
-        
-        # Configurable Grade Thresholds (calibrated for real-world coconut photos)
+
+        # Thresholds calibrated for real-world coconut photos
         self.thresholds = thresholds or {
-            "A": 72.0,  # 72-100: Grade A - High Quality
-            "B": 45.0   # 45-71:  Grade B - Medium Quality (0-44: Grade C - Low Quality)
+            "A": 72.0,   # 72-100 → Grade A (High Quality)
+            "B": 45.0    # 45-71  → Grade B (Medium Quality), <45 → Grade C
         }
 
-    def analyze(self, image):
+    def analyze(self, image, prediction: str = None):
         """
         Accepts a PIL Image or NumPy array and returns full quality assessment dict.
+
+        Args:
+            image      : PIL Image or NumPy array of the coconut photo.
+            prediction : ML prediction result — 'HEALTHY' or 'FUNGAL'.
+                         If 'FUNGAL', coconut quality grade is forced to C
+                         regardless of image quality score.
         """
         if isinstance(image, Image.Image):
             pil_img = image.convert("RGB")
@@ -44,16 +60,40 @@ class CoconutQualityGrader:
         else:
             raise ValueError("Unsupported image type. Provide a PIL Image or NumPy array.")
 
+        # Step 1: Compute raw image quality score (0-100)
         factors = self.get_quality_factors(np_img)
-        quality_score = self.calculate_quality_score(factors)
-        grade, grade_label = self.get_grade(quality_score)
-        explanation = self.get_explanation(grade)
-        disclaimer = "Visual quality assessment based on image characteristics. Does not certify internal edible safety or replace expert testing."
+        image_quality_score = self.calculate_quality_score(factors)
+        image_grade, image_grade_label = self.get_image_grade(image_quality_score)
+
+        # Step 2: Apply ML prediction override
+        # FUNGAL coconuts are ALWAYS Grade C — contamination = low coconut quality
+        is_fungal = (prediction is not None and str(prediction).upper() == "FUNGAL")
+
+        if is_fungal:
+            final_grade = "C"
+            final_grade_label = "Low Quality"
+            explanation = (
+                "Grade C: Fungal contamination detected by the AI model. "
+                "Regardless of image clarity, a coconut with fungal contamination "
+                "is classified as Low Quality and is not suitable for consumption or processing."
+            )
+        else:
+            final_grade = image_grade
+            final_grade_label = image_grade_label
+            explanation = self.get_explanation(image_grade)
+
+        disclaimer = (
+            "Visual quality assessment based on image characteristics and AI prediction. "
+            "Does not certify internal edible safety or replace expert agricultural testing."
+        )
 
         return {
-            "quality_score": round(float(quality_score), 1),
-            "grade": grade,
-            "grade_label": grade_label,
+            "quality_score": round(float(image_quality_score), 1),
+            "grade": final_grade,
+            "grade_label": final_grade_label,
+            "image_grade": image_grade,           # raw image-only grade (for display)
+            "image_quality_score": round(float(image_quality_score), 1),
+            "fungal_override": is_fungal,          # True if grade was forced to C due to fungal
             "explanation": explanation,
             "disclaimer": disclaimer,
             "factors": {k: round(float(v), 1) for k, v in factors.items()}
@@ -61,45 +101,35 @@ class CoconutQualityGrader:
 
     def get_quality_factors(self, np_img):
         """Calculates 0-100 scores for measurable visual characteristics."""
-        # Convert RGB to grayscale intensity: 0.299 R + 0.587 G + 0.114 B
+        # Grayscale: 0.299 R + 0.587 G + 0.114 B
         gray = 0.299 * np_img[:, :, 0] + 0.587 * np_img[:, :, 1] + 0.114 * np_img[:, :, 2]
 
-        # 1. Brightness / Exposure Factor (Ideal mean ~ 128)
+        # 1. Brightness / Exposure (ideal mean ~ 128)
         mean_brightness = float(np.mean(gray))
         brightness_diff = abs(mean_brightness - 128.0)
         brightness_score = max(0.0, 100.0 - (brightness_diff / 128.0) * 100.0)
 
-        # 2. Contrast Factor (Standard deviation of grayscale intensity)
+        # 2. Contrast (std deviation of grayscale; real photos std ~ 20-50)
         std_contrast = float(np.std(gray))
-        # Real coconut photos: std ~ 20-50 (lower than synthetic). Divisor lowered from 55 → 28.
         contrast_score = min(100.0, (std_contrast / 28.0) * 100.0)
 
-        # 3. Sharpness & Blur Factors (Gradient variance)
+        # 3. Sharpness & Blur (gradient variance; real photos grad_var ~ 100-400)
         gx = np.diff(gray, axis=1)
         gy = np.diff(gray, axis=0)
         grad_var = float(np.var(gx) + np.var(gy))
-
-        # Normalize sharpness — divisor lowered from 800 → 150 for real coconut photos.
-        # Real well-focused photos typically have grad_var 100–400; synthetic was higher.
         sharpness_score = min(100.0, (grad_var / 150.0) * 100.0)
-        # Blur factor: derived from sharpness; floor raised to 20 so non-blurry photos aren't penalised.
         blur_score = min(100.0, max(20.0, sharpness_score * 1.05))
 
-        # 4. Color Consistency (Standard deviation across RGB color channels)
+        # 4. Color Consistency (avg std across RGB channels)
         channel_stds = [np.std(np_img[:, :, i]) for i in range(3)]
         avg_channel_std = float(np.mean(channel_stds))
-        # Uniform natural colors have controlled channel variation
         color_consistency_score = max(0.0, min(100.0, 100.0 - abs(avg_channel_std - 45.0) * 0.8))
 
-        # 5. Image Clarity (Signal to Noise ratio metric)
-        # Real coconut photos have uniform surfaces → low noise → very high SNR.
-        # Use log-scaled SNR with a generous floor so well-exposed photos score well.
+        # 5. Clarity — log-scaled SNR with floor 35 for clear images
         signal = float(np.mean(gray))
         noise = float(np.std(gray - np.mean(gray))) + 1e-5
         snr = signal / noise
-        # Log-scale: SNR of 10 → ~100, SNR of 1 → ~0; floor at 35 for clear images
         clarity_score = min(100.0, max(35.0, (np.log1p(snr) / np.log1p(10.0)) * 100.0))
-
 
         return {
             "brightness": brightness_score,
@@ -111,12 +141,12 @@ class CoconutQualityGrader:
         }
 
     def calculate_quality_score(self, factors):
-        """Computes weighted total quality score (0-100)."""
-        total_score = sum(factors[k] * self.weights[k] for k in self.weights if k in factors)
-        return min(100.0, max(0.0, total_score))
+        """Computes weighted total image quality score (0-100)."""
+        total = sum(factors[k] * self.weights[k] for k in self.weights if k in factors)
+        return min(100.0, max(0.0, total))
 
-    def get_grade(self, score):
-        """Maps numerical quality score to letter Grade and Grade Label."""
+    def get_image_grade(self, score):
+        """Maps image quality score to A/B/C grade (image-only, no ML override)."""
         if score >= self.thresholds["A"]:
             return "A", "High Quality"
         elif score >= self.thresholds["B"]:
@@ -125,10 +155,19 @@ class CoconutQualityGrader:
             return "C", "Low Quality"
 
     def get_explanation(self, grade):
-        """Returns quality assessment explanation based on assigned grade."""
+        """Returns explanation text for image-quality-based grade."""
         if grade == "A":
-            return "Grade A: Image has good brightness, strong sharpness, clear surface visibility, and consistent color characteristics."
+            return (
+                "Grade A: Image has good brightness, strong sharpness, "
+                "clear surface visibility, and consistent color characteristics."
+            )
         elif grade == "B":
-            return "Grade B: Image has moderate visual quality. Some lighting, sharpness, or contrast limitations are present."
+            return (
+                "Grade B: Image has moderate visual quality. "
+                "Some lighting, sharpness, or contrast limitations are present."
+            )
         else:
-            return "Grade C: Image quality is low due to factors such as poor lighting, blur, low contrast, or inconsistent visual characteristics."
+            return (
+                "Grade C: Image quality is low due to poor lighting, blur, "
+                "low contrast, or inconsistent visual characteristics."
+            )
