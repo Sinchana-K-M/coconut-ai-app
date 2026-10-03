@@ -22,6 +22,12 @@ dataset/
 bad_images/
 images/
 
+# ML model files — too large for git push over slow connections
+# Model is downloaded on Railway startup via download_model.py
+*.keras
+*.h5
+
+
 # Uploads (user files — don't commit)
 uploads/
 backend/uploads/
