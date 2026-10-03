@@ -1,0 +1,69 @@
+==================================================
+        MISCLASSIFIED TEST IMAGES REPORT          
+==================================================
+Total Test Images Processed : 68
+Total Misclassified Images   : 11
+==================================================
+
+1. FUNGAL IMAGES PREDICTED AS HEALTHY:
+--------------------------------------------------
+  1. Filename       : dataset/test\fungal\fungal_002.jpg
+     Actual Class   : fungal
+     Predicted Class: healthy
+     Confidence     : 96.93%
+
+  2. Filename       : dataset/test\fungal\fungal_006.jpg
+     Actual Class   : fungal
+     Predicted Class: healthy
+     Confidence     : 62.21%
+
+  3. Filename       : dataset/test\fungal\fungal_009.jpg
+     Actual Class   : fungal
+     Predicted Class: healthy
+     Confidence     : 82.20%
+
+  4. Filename       : dataset/test\fungal\fungal_054.jpg
+     Actual Class   : fungal
+     Predicted Class: healthy
+     Confidence     : 73.52%
+
+  5. Filename       : dataset/test\fungal\fungal_057.jpg
+     Actual Class   : fungal
+     Predicted Class: healthy
+     Confidence     : 82.02%
+
+  6. Filename       : dataset/test\fungal\fungal_087.jpg
+     Actual Class   : fungal
+     Predicted Class: healthy
+     Confidence     : 87.66%
+
+  7. Filename       : dataset/test\fungal\fungal_089.jpg
+     Actual Class   : fungal
+     Predicted Class: healthy
+     Confidence     : 74.36%
+
+  8. Filename       : dataset/test\fungal\fungal_098.jpg
+     Actual Class   : fungal
+     Predicted Class: healthy
+     Confidence     : 82.59%
+
+2. HEALTHY IMAGES PREDICTED AS FUNGAL:
+--------------------------------------------------
+  1. Filename       : dataset/test\healthy\healthy_08.jpg
+     Actual Class   : healthy
+     Predicted Class: fungal
+     Confidence     : 50.48%
+
+  2. Filename       : dataset/test\healthy\healthy_115.jpg
+     Actual Class   : healthy
+     Predicted Class: fungal
+     Confidence     : 64.88%
+
+  3. Filename       : dataset/test\healthy\healthy_51.jpg
+     Actual Class   : healthy
+     Predicted Class: fungal
+     Confidence     : 77.60%
+
+==================================================
+SUMMARY: 11 misclassified image(s) found.
+==================================================

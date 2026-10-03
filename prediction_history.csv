@@ -1,0 +1,49 @@
+Prediction_ID,Date,Time,Filename,Prediction,Confidence,Model,Model_Accuracy,Quality_Score,Quality_Grade,Quality_Grade_Label
+1,2026-09-29,02:14:11,fungal_219.jpeg,FUNGAL,100.0,MobileNetV2-V2,92.65,N/A,N/A,N/A
+2,2026-09-29,18:46:13,fungal_006.jpg,FUNGAL,98.98,MobileNetV2-V2,92.65,N/A,N/A,N/A
+3,2026-09-29,18:48:39,fungal_006.jpg,FUNGAL,98.98,MobileNetV2-V2,92.65,N/A,N/A,N/A
+4,2026-09-29,18:49:27,fungal_006.jpg,FUNGAL,98.98,MobileNetV2-V2,92.65,N/A,N/A,N/A
+5,2026-09-29,18:50:45,fungal_006.jpg,FUNGAL,98.98,MobileNetV2-V2,92.65,N/A,N/A,N/A
+6,2026-09-29,19:03:45,fungal_006.jpg,FUNGAL,98.98,MobileNetV2-V2,92.65,N/A,N/A,N/A
+7,2026-09-29,19:12:19,healthy_84.jpg,HEALTHY,99.91,MobileNetV2-V2,92.65,N/A,N/A,N/A
+8,2026-09-29,19:12:58,fungal_219.jpeg,FUNGAL,100.0,MobileNetV2-V2,92.65,N/A,N/A,N/A
+9,2026-09-29,19:25:20,fungal_006.jpg,FUNGAL,98.98,MobileNetV2-V2,92.65,62.1,B,Medium Quality
+10,2026-09-29,19:32:10,fungal_217.jpeg,FUNGAL,100.0,MobileNetV2-V2,92.65,54.8,C,Low Quality
+11,2026-09-29,19:33:16,healthy_82.jpg,HEALTHY,99.71,MobileNetV2-V2,92.65,79.4,B,Medium Quality
+12,2026-09-29,19:47:24,healthy_83.jpg,HEALTHY,99.69,MobileNetV2-V2,92.65,67.8,B,Medium Quality
+13,2026-09-29,20:56:16,healthy_83.jpg,HEALTHY,99.69,MobileNetV2-V2,92.65,67.8,B,Medium Quality
+14,2026-09-29,20:56:42,fungal_005.jpg,FUNGAL,99.82,MobileNetV2-V2,92.65,55.5,C,Low Quality
+15,2026-09-29,21:03:54,camera_capture_20260929_210300.jpg,FUNGAL,91.03,MobileNetV2-V2,92.65,37.0,C,Low Quality
+16,2026-09-29,21:08:33,fungal_218.jpeg,FUNGAL,100.0,MobileNetV2-V2,92.65,55.9,C,Low Quality
+17,2026-09-29,21:38:43,fungal_244.jpeg,FUNGAL,100.0,MobileNetV2-V2,92.65,53.5,C,Low Quality
+18,2026-09-29,21:39:08,fungal_219.jpeg,FUNGAL,100.0,MobileNetV2-V2,92.65,53.6,C,Low Quality
+19,2026-09-29,21:39:25,fungal_243.jpeg,FUNGAL,99.99,MobileNetV2-V2,92.65,63.1,B,Medium Quality
+20,2026-09-29,21:40:02,fungal_243.jpeg,FUNGAL,99.99,MobileNetV2-V2,92.65,63.1,B,Medium Quality
+21,2026-09-29,21:40:03,fungal_244.jpeg,FUNGAL,100.0,MobileNetV2-V2,92.65,53.5,C,Low Quality
+22,2026-09-29,21:40:04,fungal_217.jpeg,FUNGAL,100.0,MobileNetV2-V2,92.65,54.8,C,Low Quality
+23,2026-09-29,21:40:05,fungal_220.jpeg,FUNGAL,100.0,MobileNetV2-V2,92.65,52.8,C,Low Quality
+24,2026-09-29,21:43:38,fungal_106.jpeg,FUNGAL,99.81,MobileNetV2-V2,92.65,55.1,C,Low Quality
+25,2026-09-29,22:16:29,fungal_089.jpg,FUNGAL,84.37,MobileNetV2-V2,92.65,70.5,B,Medium Quality
+26,2026-09-29,22:20:46,fungal_244.jpeg,FUNGAL,100.0,MobileNetV2-V2,92.65,53.5,C,Low Quality
+27,2026-10-01,19:55:45,coconut_sample.jpg,FUNGAL,89.15,MobileNetV2-V2,92.65,36.1,C,Low Quality
+28,2026-10-01,20:02:51,fungal_222.jpeg,FUNGAL,100.0,MobileNetV2-V2,92.65,53.7,C,Low Quality
+29,2026-10-01,20:04:44,fungal_008.jpg,FUNGAL,94.65,MobileNetV2-V2,92.65,61.5,B,Medium Quality
+30,2026-10-01,20:05:18,fungal_035.jpg,FUNGAL,97.44,MobileNetV2-V2,92.65,50.4,C,Low Quality
+31,2026-10-01,20:05:53,healthy_31.jpg,HEALTHY,99.93,MobileNetV2-V2,92.65,78.4,B,Medium Quality
+32,2026-10-01,20:06:39,healthy_83.jpg,HEALTHY,99.69,MobileNetV2-V2,92.65,67.8,B,Medium Quality
+33,2026-10-01,20:06:58,healthy_144.jpg,HEALTHY,98.18,MobileNetV2-V2,92.65,55.0,C,Low Quality
+34,2026-10-01,20:07:48,healthy_04.jpg,HEALTHY,78.37,MobileNetV2-V2,92.65,46.3,C,Low Quality
+35,2026-10-01,20:08:05,healthy_66.jpg,FUNGAL,53.0,MobileNetV2-V2,92.65,61.1,B,Medium Quality
+36,2026-10-01,20:08:38,healthy_49.jpg,HEALTHY,99.89,MobileNetV2-V2,92.65,60.3,B,Medium Quality
+37,2026-10-01,20:23:10,healthy_02.jpg,HEALTHY,99.9,MobileNetV2-V2,92.65,51.6,C,Low Quality
+38,2026-10-02,10:25:49,healthy_35.jpg,HEALTHY,99.96,MobileNetV2-V2,92.65,80.9,A,High Quality
+39,2026-10-02,10:26:32,healthy_04.jpg,HEALTHY,78.37,MobileNetV2-V2,92.65,46.3,C,Low Quality
+40,2026-10-02,10:26:52,healthy_47.jpg,HEALTHY,99.97,MobileNetV2-V2,92.65,60.6,B,Medium Quality
+41,2026-10-02,10:27:12,healthy_60.jpg,HEALTHY,99.72,MobileNetV2-V2,92.65,59.5,C,Low Quality
+42,2026-10-02,10:27:29,healthy_49.jpg,HEALTHY,99.89,MobileNetV2-V2,92.65,60.3,B,Medium Quality
+43,2026-10-02,10:27:57,healthy_31.jpg,HEALTHY,99.93,MobileNetV2-V2,92.65,78.4,B,Medium Quality
+44,2026-10-03,09:40:29,healthy_34.jpg,HEALTHY,99.91,MobileNetV2-V2,92.65,84.0,A,High Quality
+45,2026-10-03,09:40:58,healthy_60.jpg,HEALTHY,99.72,MobileNetV2-V2,92.65,80.1,A,High Quality
+46,2026-10-03,09:41:17,healthy_04.jpg,HEALTHY,78.37,MobileNetV2-V2,92.65,67.3,B,Medium Quality
+47,2026-10-03,09:42:01,healthy_58.jpg,HEALTHY,99.0,MobileNetV2-V2,92.65,83.9,A,High Quality
+48,2026-10-03,09:42:15,healthy_56.jpg,HEALTHY,99.3,MobileNetV2-V2,92.65,85.7,A,High Quality
