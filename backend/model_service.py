@@ -15,6 +15,13 @@ MODEL_PATH_PRIMARY = "coconut_fungal_model_v2.keras"
 MODEL_PATH_FALLBACK = "../coconut_fungal_model_v2.keras"
 IMG_SIZE = (224, 224)
 
+# Absolute paths for Railway deployment (CWD-independent)
+_BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+_ROOT_DIR = os.path.dirname(_BACKEND_DIR)
+MODEL_PATH_BACKEND_ABS = os.path.join(_BACKEND_DIR, "coconut_fungal_model_v2.keras")
+MODEL_PATH_ROOT_ABS    = os.path.join(_ROOT_DIR,    "coconut_fungal_model_v2.keras")
+
+
 _model = None
 
 def load_singleton_model():
@@ -23,9 +30,24 @@ def load_singleton_model():
     if _model is not None:
         return _model
 
-    target_path = MODEL_PATH_PRIMARY if os.path.exists(MODEL_PATH_PRIMARY) else MODEL_PATH_FALLBACK
-    if not os.path.exists(target_path):
-        raise FileNotFoundError(f"Model file '{target_path}' not found.")
+    # Search all possible locations (absolute paths first for Railway)
+    candidates = [
+        MODEL_PATH_BACKEND_ABS,   # /app/backend/coconut_fungal_model_v2.keras
+        MODEL_PATH_ROOT_ABS,      # /app/coconut_fungal_model_v2.keras
+        MODEL_PATH_PRIMARY,       # relative: coconut_fungal_model_v2.keras (CWD)
+        MODEL_PATH_FALLBACK,      # relative: ../coconut_fungal_model_v2.keras
+    ]
+
+    target_path = None
+    for path in candidates:
+        if os.path.exists(path):
+            target_path = path
+            break
+
+    if target_path is None:
+        raise FileNotFoundError(
+            f"Model file not found in any of: {candidates}"
+        )
 
     print(f"Loading Keras model from: {target_path}...")
     _model = tf.keras.models.load_model(target_path)
@@ -38,6 +60,7 @@ def get_model():
     if _model is None:
         return load_singleton_model()
     return _model
+
 
 def preprocess_image_bytes(image_bytes: bytes):
     """
