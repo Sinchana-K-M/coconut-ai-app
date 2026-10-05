@@ -48,7 +48,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Coconut Quality Assessment API",
     description="AI-Powered Coconut Quality & Fungal Detection API using MobileNetV2, Grad-CAM, SQLite & Analytics",
-    version="2.0.0",
+    version="2.0.1",
     lifespan=lifespan
 )
 
