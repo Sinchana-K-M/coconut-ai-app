@@ -1,10 +1,22 @@
 import os
 import sys
 
+# Prevent OpenBLAS memory allocation crash on server startup
+os.environ['OPENBLAS_NUM_THREADS'] = '1'
+os.environ['OPENBLAS_MAIN_FREE'] = '1'
+os.environ['GOTO_NUM_THREADS'] = '1'
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
+os.environ['NUMEXPR_NUM_THREADS'] = '1'
+os.environ['VECLIB_MAXIMUM_THREADS'] = '1'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+
 # Ensure backend directory is in sys.path regardless of execution CWD
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
+
 
 from contextlib import asynccontextmanager
 from typing import List, Optional

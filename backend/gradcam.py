@@ -1,14 +1,15 @@
 import io
 import base64
 import numpy as np
-import tensorflow as tf
 from PIL import Image
 import matplotlib.pyplot as plt
+
 
 def find_gradcam_target_layer(model):
     """
     Safely locates MobileNetV2 base model and its final Conv layer (Conv_1).
     """
+    import tensorflow as tf
     base_model = None
     for layer in model.layers:
         if "mobilenetv2" in layer.name.lower():
@@ -32,7 +33,9 @@ def compute_raw_gradcam_heatmap(model, img_batch, raw_pred_score):
     """
     Calculates raw Grad-CAM heatmap array normalized [0, 1] using TensorFlow GradientTape.
     """
+    import tensorflow as tf
     base_model, conv_layer = find_gradcam_target_layer(model)
+
 
     sub_model = tf.keras.models.Model(
         inputs=base_model.input,
