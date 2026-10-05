@@ -70,22 +70,31 @@ export default function PredictionHistory({ historyRecords, onClearHistory }) {
               </tr>
             </thead>
             <tbody>
-              {historyRecords.slice().reverse().map((row, idx) => (
-                <tr key={idx}>
-                  <td>#{row.Prediction_ID || row.id}</td>
-                  <td style={{ fontSize: '12.5px' }}>{row.Date} {row.Time}</td>
-                  <td style={{ fontWeight: 600 }}>{row.Filename}</td>
-                  <td style={{ fontSize: '12px', color: '#64748b' }}>{row.Source || ('camera' in str(row.Filename).lower() ? 'Camera' : 'Upload')}</td>
-                  <td>
-                    <span className={row.Prediction === 'HEALTHY' ? 'badge-healthy' : 'badge-fungal'}>
-                      {row.Prediction}
-                    </span>
-                  </td>
-                  <td style={{ fontWeight: 700 }}>{Number(row.Confidence).toFixed(1)}%</td>
-                  <td style={{ fontWeight: 700, color: '#059669' }}>Grade {row.Quality_Grade || 'N/A'}</td>
-                  <td style={{ fontSize: '12px', color: '#64748b' }}>{row.Model}</td>
-                </tr>
-              ))}
+              {historyRecords.slice().reverse().map((row, idx) => {
+                const confNum = Number(row.Confidence);
+                const confDisplay = !isNaN(confNum) && row.Confidence !== 'N/A' ? `${confNum.toFixed(1)}%` : (row.Confidence || 'N/A');
+                const filenameStr = String(row.Filename || '');
+                const sourceDisplay = row.Source || (filenameStr.toLowerCase().includes('camera') ? 'Camera' : 'Upload');
+
+                return (
+                  <tr key={idx}>
+                    <td>#{row.Prediction_ID || row.id || idx + 1}</td>
+                    <td style={{ fontSize: '12.5px' }}>{row.Date || ''} {row.Time || ''}</td>
+                    <td style={{ fontWeight: 600 }}>{filenameStr || 'sample.jpg'}</td>
+                    <td style={{ fontSize: '12px', color: '#64748b' }}>{sourceDisplay}</td>
+                    <td>
+                      <span className={row.Prediction === 'HEALTHY' ? 'badge-healthy' : 'badge-fungal'}>
+                        {row.Prediction || 'UNKNOWN'}
+                      </span>
+                    </td>
+                    <td style={{ fontWeight: 700 }}>{confDisplay}</td>
+                    <td style={{ fontWeight: 700, color: row.Quality_Grade === 'C' ? '#dc2626' : '#059669' }}>
+                      Grade {row.Quality_Grade || 'N/A'}
+                    </td>
+                    <td style={{ fontSize: '12px', color: '#64748b' }}>{row.Model || 'MobileNetV2-V2'}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
