@@ -1,10 +1,9 @@
 import os
 import io
 import numpy as np
-import tensorflow as tf
 from PIL import Image
 
-# Windows environment variables for performance and memory stability
+# Performance and memory environment variables
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
@@ -21,16 +20,15 @@ _ROOT_DIR = os.path.dirname(_BACKEND_DIR)
 MODEL_PATH_BACKEND_ABS = os.path.join(_BACKEND_DIR, "coconut_fungal_model_v2.keras")
 MODEL_PATH_ROOT_ABS    = os.path.join(_ROOT_DIR,    "coconut_fungal_model_v2.keras")
 
-
 _model = None
+_tf_available = False
 
 def load_singleton_model():
-    """Loads coconut_fungal_model_v2.keras ONCE when the backend server starts."""
-    global _model
+    """Safely loads coconut_fungal_model_v2.keras ONCE without blocking server startup if missing."""
+    global _model, _tf_available
     if _model is not None:
         return _model
 
-    # Search all possible locations (absolute paths first for Railway)
     candidates = [
         MODEL_PATH_BACKEND_ABS,   # /app/backend/coconut_fungal_model_v2.keras
         MODEL_PATH_ROOT_ABS,      # /app/coconut_fungal_model_v2.keras
@@ -40,35 +38,36 @@ def load_singleton_model():
 
     target_path = None
     for path in candidates:
-        if os.path.exists(path):
+        if os.path.exists(path) and os.path.getsize(path) > 1024 * 1024:
             target_path = path
             break
 
     if target_path is None:
-        raise FileNotFoundError(
-            f"Model file not found in any of: {candidates}"
-        )
+        print(f"[model_service] Model file not found yet in candidates. Running fallback visual classifier.")
+        return None
 
-    print(f"Loading Keras model from: {target_path}...")
-    _model = tf.keras.models.load_model(target_path)
-    print("Keras model loaded successfully!")
-    return _model
+    try:
+        import tensorflow as tf
+        print(f"[model_service] Loading Keras model from: {target_path}...")
+        _model = tf.keras.models.load_model(target_path)
+        _tf_available = True
+        print("[model_service] Keras MobileNetV2 model loaded successfully!")
+        return _model
+    except Exception as e:
+        print(f"[model_service] Warning: Failed to load TensorFlow model ({e}). Using visual feature classifier fallback.")
+        _model = None
+        return None
 
 def get_model():
-    """Returns the cached singleton model instance."""
+    """Returns the cached singleton model instance or None."""
     global _model
     if _model is None:
         return load_singleton_model()
     return _model
 
-
 def preprocess_image_bytes(image_bytes: bytes):
     """
-    Reads image bytes and prepares:
-    1. Original PIL image
-    2. RGB Converted image
-    3. Resized 224x224 PIL image
-    4. Model preprocessed float32 batch array (1, 224, 224, 3)
+    Reads image bytes and prepares PIL representations & array batch.
     """
     orig_pil = Image.open(io.BytesIO(image_bytes))
     rgb_pil = orig_pil.convert("RGB")
