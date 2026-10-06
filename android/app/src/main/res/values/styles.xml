@@ -1,0 +1,9 @@
+<resources>
+    <style name="Theme.CoconutAI" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">#1A5C35</item>
+        <item name="colorPrimaryVariant">#0F3D21</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="android:statusBarColor">#1A5C35</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>
