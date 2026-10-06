@@ -14,25 +14,14 @@ class FinancialYieldCalculator:
         is_healthy = (str(prediction).upper() == "HEALTHY")
         q_score = float(quality_score) if (quality_score is not None and str(quality_score) != "N/A") else 75.0
 
-        # Base oil extraction % (Ideal copra has ~62-65% oil content)
+        # Continuous dynamic formula based on exact quality_score (0.0 to 100.0)
+        # Guarantees unique values for every single sample
         if is_healthy:
-            if grade == "A":
-                oil_pct = 64.5
-                copra_usable_pct = 0.95
-            elif grade == "B":
-                oil_pct = 56.0
-                copra_usable_pct = 0.82
-            else:
-                oil_pct = 45.0
-                copra_usable_pct = 0.65
+            copra_usable_pct = round(0.70 + (q_score / 100.0) * 0.26, 3)
+            oil_pct = round(48.0 + (q_score / 100.0) * 16.5, 1)
         else:
-            # Fungal infected coconuts lose significant kernel weight and oil quality
-            if q_score >= 50:
-                oil_pct = 28.0
-                copra_usable_pct = 0.40
-            else:
-                oil_pct = 12.0
-                copra_usable_pct = 0.15
+            copra_usable_pct = round(0.08 + (q_score / 100.0) * 0.34, 3)
+            oil_pct = round(8.0 + (q_score / 100.0) * 22.0, 1)
 
         usable_copra_g = round(average_coconut_weight_g * copra_usable_pct, 1)
         estimated_oil_ml = round((usable_copra_g * (oil_pct / 100.0)) * 1.09, 1) # ~0.92 g/mL density
