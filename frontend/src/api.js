@@ -1,10 +1,15 @@
 import axios from 'axios';
 
-// In production (Vercel), VITE_API_URL is set to the Railway backend URL.
-// In development, Vite proxy forwards /api → http://127.0.0.1:8000 automatically.
+// Railway backend URL — used in production on Vercel
+const RAILWAY_URL = 'https://disciplined-youth-production-9629.up.railway.app';
+
+// Use VITE_API_URL env var if set, otherwise use hardcoded Railway URL
+// Falls back to /api only in local development (when running vite dev)
 const API_BASE_URL = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/api`
-  : '/api';
+  : import.meta.env.DEV
+    ? '/api'
+    : `${RAILWAY_URL}/api`;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
