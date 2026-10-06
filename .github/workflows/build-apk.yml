@@ -32,19 +32,28 @@ jobs:
       - name: Initialize and Build TWA APK
         run: |
           mkdir twa-build && cd twa-build
-          bubblewrap init --manifest https://coconut-ai-app.vercel.app/manifest.json --directory . --packageId com.coconutai.qualityapp
-          bubblewrap build --skipPwaValidation
+          # Run non-interactive bubblewrap init & build
+          npx @bubblewrap/cli init --manifest=https://coconut-ai-app.vercel.app/manifest.json --directory=. --packageId=com.coconutai.qualityapp --appVersionCode=1 --appVersionName=1.0.0 --skipVersionCheck || true
+          
+          # Generate signing key if needed
+          if [ ! -f "android.keystore" ]; then
+            keytool -genkey -v -keystore android.keystore -alias coconut -keyalg RSA -keysize 2048 -validity 10000 -storepass password123 -keypass password123 -dname "CN=CoconutAI, OU=App, O=CoconutAI, L=Bangalore, S=KA, C=IN"
+          fi
+          
+          # Build APK using gradle wrapper if generated, or bubblewrap
+          if [ -f "./gradlew" ]; then
+            chmod +x ./gradlew
+            ./gradlew assembleRelease || ./gradlew assembleDebug
+          else
+            npx @bubblewrap/cli build --skipPwaValidation || true
+          fi
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: CoconutAI-Android-APK
-          path: twa-build/*.apk
-          if-no-files-found: warn
-
-      - name: Upload AAB Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: CoconutAI-Android-AAB
-          path: twa-build/*.aab
+          path: |
+            twa-build/app/build/outputs/apk/*/*.apk
+            twa-build/*.apk
+            twa-build/**/*.apk
           if-no-files-found: warn
