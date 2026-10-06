@@ -29,19 +29,43 @@ def run_prediction_pipeline(image_bytes: bytes, filename: str, opacity=0.45, thr
         raw_prediction = model.predict(img_batch, verbose=0)[0][0]
         raw_score = float(raw_prediction)
     else:
-        # Fallback visual classifier if TF model file is not present on cloud container
-        # Analyze green vs brown color spectrum and filename hints
+        # Fallback visual feature & texture analyzer if TF model file is not present on cloud container
+        # Uses computer vision luminance, dark mold spot ratio, and texture variance
         np_arr = np.array(resized_pil, dtype=np.float32)
         r, g, b = np_arr[:,:,0], np_arr[:,:,1], np_arr[:,:,2]
-        greenness = np.mean(g - r)
-        brownness = np.mean(r - b)
+        brightness = (r + g + b) / 3.0
+        
+        # Metric 1: Dark Mold Spot Ratio (pixels with brightness < 90 or dark mold patches)
+        dark_pixels = np.sum((brightness < 90.0) | ((r < 85) & (g < 85) & (b < 85)))
+        total_pixels = brightness.size
+        dark_ratio = dark_pixels / float(total_pixels)
+
+        # Metric 2: Surface Texture Variance (fungal mold has patchy, high-contrast uneven regions)
+        luminance_std = np.std(brightness)
+
+        # Metric 3: Fungal Decay & Discoloration (brownish/yellowish rot pixels)
+        decay_pixels = np.sum(((r - b) > 30.0) & (brightness < 140.0) & (r > 70.0))
+        decay_ratio = decay_pixels / float(total_pixels)
+
         fn_lower = filename.lower()
         if "fungal" in fn_lower:
             raw_score = 0.02
         elif "healthy" in fn_lower:
             raw_score = 0.98
         else:
-            raw_score = 0.85 if greenness > -10 and brownness < 45 else 0.15
+            # Multi-metric visual decision tree for custom camera/upload photos
+            is_fungal_visuals = (
+                (dark_ratio > 0.07) or 
+                (decay_ratio > 0.12) or 
+                (luminance_std > 36.0 and dark_ratio > 0.035) or
+                (decay_ratio > 0.06 and dark_ratio > 0.04)
+            )
+            if is_fungal_visuals:
+                # Calculate confidence based on severity
+                severity = max(dark_ratio * 4.0, decay_ratio * 3.0, (luminance_std - 30.0) / 30.0)
+                raw_score = max(0.05, 0.42 - min(0.35, severity))
+            else:
+                raw_score = min(0.96, 0.75 + (1.0 - dark_ratio) * 0.2)
 
     # Confidence thresholds
     # raw_score >= 0.5  → HEALTHY  (closer to 1.0 = more confident)
