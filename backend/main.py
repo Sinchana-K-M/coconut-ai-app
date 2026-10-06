@@ -64,15 +64,20 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Enable CORS — reads from ALLOWED_ORIGINS env var in production (comma-separated)
-# e.g. ALLOWED_ORIGINS=https://coconut-ai.vercel.app,https://your-custom-domain.com
+# Enable CORS — always include Vercel URLs + any extras from ALLOWED_ORIGINS env var
 _raw_origins = os.environ.get("ALLOWED_ORIGINS", "")
-origins = [o.strip() for o in _raw_origins.split(",") if o.strip()] or [
+_extra_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+
+# Explicitly list allowed origins — required when allow_credentials=True (cannot use "*")
+origins = list(set([
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:3000",
-    "*"
-]
+    "https://coconut-ai-app.vercel.app",
+    "https://coconut-ai-app-sinchana-k-ms-projects.vercel.app",
+    "https://coconut-ai-cb29xfr5k-sinchana-k-ms-projects.vercel.app",
+    "https://coconut-ai-2d21grq95-sinchana-k-ms-projects.vercel.app",
+] + _extra_origins))
 
 app.add_middleware(
     CORSMiddleware,
