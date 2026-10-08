@@ -1,9 +1,8 @@
-import React, { useRef, useState } from 'react';
-import { Upload, Image as ImageIcon, RotateCcw, Sparkles } from 'lucide-react';
+import React, { useRef } from 'react';
+import { Upload, Image as ImageIcon, RotateCcw } from 'lucide-react';
 
 export default function ImageUploader({ onFileSelect, onReset, selectedFile, previewUrl, isLoading }) {
   const fileInputRef = useRef(null);
-  const [isDragging, setIsDragging] = useState(false);
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -13,34 +12,30 @@ export default function ImageUploader({ onFileSelect, onReset, selectedFile, pre
 
   const handleDrop = (e) => {
     e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files && e.target.files?.[0] || e.dataTransfer.files[0]) {
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       onFileSelect(e.dataTransfer.files[0]);
     }
   };
 
   return (
-    <div className="card animate-fade-in">
+    <div className="card">
       <div className="card-title">
-        <Upload size={22} color="#059669" />
-        <span>Upload Coconut Image</span>
+        <Upload size={20} />
+        <span>Upload Image</span>
       </div>
 
       <div
         style={{
-          border: isDragging ? '2px dashed #10b981' : '2px dashed #cbd5e1',
-          borderRadius: '16px',
-          padding: '28px 20px',
+          border: '2px dashed #cbd5e1',
+          borderRadius: '12px',
+          padding: '24px',
           textAlign: 'center',
-          backgroundColor: isDragging ? '#ecfdf5' : '#f8fafc',
+          backgroundColor: '#f8fafc',
           cursor: 'pointer',
-          marginBottom: '20px',
-          transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-          boxShadow: isDragging ? '0 0 15px rgba(16, 185, 129, 0.2)' : 'none'
+          marginBottom: '16px',
         }}
         onClick={() => fileInputRef.current?.click()}
-        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-        onDragLeave={() => setIsDragging(false)}
+        onDragOver={(e) => e.preventDefault()}
         onDrop={handleDrop}
       >
         <input
@@ -53,47 +48,24 @@ export default function ImageUploader({ onFileSelect, onReset, selectedFile, pre
 
         {previewUrl ? (
           <div>
-            <div style={{ position: 'relative', display: 'inline-block' }}>
-              <img
-                src={previewUrl}
-                alt="Preview"
-                style={{
-                  maxHeight: '260px',
-                  maxWidth: '100%',
-                  borderRadius: '12px',
-                  marginBottom: '12px',
-                  boxShadow: '0 8px 20px rgba(0,0,0,0.12)',
-                  border: '2px solid #e2e8f0'
-                }}
-              />
-            </div>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-              <Sparkles size={14} color="#10b981" />
-              <span>Selected: {selectedFile?.name}</span>
+            <img
+              src={previewUrl}
+              alt="Preview"
+              style={{ maxHeight: '240px', maxWidth: '100%', borderRadius: '8px', marginBottom: '8px' }}
+            />
+            <div style={{ fontSize: '13px', fontWeight: 600, color: '#4b5563' }}>
+              Selected: {selectedFile?.name}
             </div>
           </div>
         ) : (
-          <div>
-            <div style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: '50%',
-              backgroundColor: '#ecfdf5',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 16px',
-              color: '#059669',
-              boxShadow: '0 4px 10px rgba(5, 150, 105, 0.15)'
-            }}>
-              <ImageIcon size={32} />
-            </div>
-            <h4 style={{ fontSize: '16px', fontWeight: 700, color: '#0f172a', marginBottom: '6px' }}>
+          <div style={{ padding: '20px 0' }}>
+            <ImageIcon size={48} color="#94a3b8" style={{ marginBottom: '8px' }} />
+            <div style={{ fontSize: '15px', fontWeight: 700, color: '#334155' }}>
               Drag & Drop or Click to Upload
-            </h4>
-            <p style={{ fontSize: '13px', color: '#64748b' }}>
+            </div>
+            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
               Supports JPG, JPEG, and PNG images
-            </p>
+            </div>
           </div>
         )}
       </div>
@@ -101,17 +73,17 @@ export default function ImageUploader({ onFileSelect, onReset, selectedFile, pre
       <div style={{ display: 'flex', gap: '12px' }}>
         <button
           className="btn btn-primary"
-          style={{ flex: 1, padding: '12px' }}
+          style={{ flex: 1 }}
           onClick={() => fileInputRef.current?.click()}
           disabled={isLoading}
         >
-          <Upload size={18} />
+          <Upload size={16} />
           <span>{selectedFile ? 'Change Image' : 'Select Image'}</span>
         </button>
 
         {selectedFile && (
           <button className="btn btn-secondary" onClick={onReset} disabled={isLoading}>
-            <RotateCcw size={18} />
+            <RotateCcw size={16} />
             <span>Reset</span>
           </button>
         )}

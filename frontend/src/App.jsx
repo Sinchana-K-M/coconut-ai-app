@@ -243,7 +243,7 @@ export default function App() {
                 <QualityGrade result={predictionResult} />
 
                 <FinancialYieldCard yieldData={predictionResult.yield_analysis} />
-                <MoldTreatmentCard moldData={predictionResult.mold_analysis} isFungal={predictionResult.prediction === 'Fungal' || predictionResult.prediction === 'FUNGAL'} />
+                <MoldTreatmentCard moldData={predictionResult.mold_analysis} isFungal={predictionResult.prediction === 'FUNGAL'} />
               </>
             )}
           </div>

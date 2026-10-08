@@ -1,29 +1,15 @@
-import React, { useState } from 'react';
-import { CheckCircle2, AlertTriangle, Download, Info, ChevronDown, ChevronUp } from 'lucide-react';
+import React from 'react';
+import { CheckCircle2, AlertTriangle, Download, AlertCircle } from 'lucide-react';
 
 export default function PredictionCard({ result, onDownloadCurrentCSV }) {
-  const [showDetails, setShowDetails] = useState(false);
-
   if (!result) {
     return (
-      <div className="card" style={{ textAlign: 'center', padding: '48px 24px', color: '#94a3b8' }}>
-        <div style={{
-          width: '64px',
-          height: '64px',
-          borderRadius: '50%',
-          backgroundColor: '#f1f5f9',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '32px',
-          margin: '0 auto 16px'
-        }}>
-          🥥
+      <div className="card" style={{ textAlign: 'center', padding: '40px 20px', color: '#94a3b8' }}>
+        <div style={{ fontSize: '40px', marginBottom: '12px' }}>🥥</div>
+        <div style={{ fontSize: '16px', fontWeight: 600, color: '#64748b' }}>No Active Assessment</div>
+        <div style={{ fontSize: '13px', marginTop: '4px' }}>
+          Upload a coconut or copra image to run MobileNetV2 assessment &amp; Grad-CAM analysis.
         </div>
-        <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#475569', marginBottom: '4px' }}>Ready for Scan</h3>
-        <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>
-          Upload a coconut image to run real-time assessment.
-        </p>
       </div>
     );
   }
@@ -33,109 +19,73 @@ export default function PredictionCard({ result, onDownloadCurrentCSV }) {
   const isLowConfidence = result.low_confidence_warning === true;
 
   return (
-    <div className="card animate-fade-in" style={{ padding: '24px' }}>
-      <div
-        style={{
-          borderRadius: '16px',
-          padding: '24px',
-          background: isHealthy
-            ? 'linear-gradient(135deg, #ecfdf5 0%, #dcfce7 100%)'
-            : 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
-          border: `2px solid ${isHealthy ? '#10b981' : '#ef4444'}`,
-          boxShadow: '0 4px 14px rgba(0,0,0,0.06)'
-        }}
-      >
-        {/* Status Header */}
+    <div className="card">
+      <div className={`result-card ${isHealthy ? 'result-healthy' : 'result-fungal'}`}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <span className={isHealthy ? 'badge-healthy' : 'badge-fungal'}>
             {isHealthy
-              ? <><CheckCircle2 size={15} /> HEALTHY SAMPLE</>
-              : <><AlertTriangle size={15} /> CONTAMINATION DETECTED</>}
+              ? <><CheckCircle2 size={14} style={{ display: 'inline', marginRight: '4px' }} /> PASS - HEALTHY</>
+              : <><AlertTriangle size={14} style={{ display: 'inline', marginRight: '4px' }} /> WARNING - CONTAMINATION DETECTED</>}
           </span>
-          <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', backgroundColor: 'rgba(255,255,255,0.7)', padding: '4px 10px', borderRadius: '12px' }}>
-            MobileNetV2
-          </span>
+          <span style={{ fontSize: '13px', color: '#6b7280', fontWeight: 600 }}>Model: {result.model || 'MobileNetV2-V2'}</span>
         </div>
 
-        {/* Prediction Main Result */}
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{ fontSize: '12px', fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            AI Assessment Output
-          </div>
+        {/* Low Confidence Warning Banner */}
+        {isLowConfidence && (
           <div style={{
-            fontSize: '36px',
-            fontWeight: 800,
-            color: isLowConfidence ? '#d97706' : (isHealthy ? '#059669' : '#dc2626'),
-            letterSpacing: '-0.02em',
-            margin: '4px 0'
+            backgroundColor: '#fef3c7',
+            border: '2px solid #f59e0b',
+            borderRadius: '8px',
+            padding: '10px 14px',
+            marginBottom: '14px',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '8px',
           }}>
+            <AlertCircle size={18} color="#d97706" style={{ flexShrink: 0, marginTop: '1px' }} />
+            <div style={{ fontSize: '13px', color: '#92400e', fontWeight: 600 }}>
+              LOW CONFIDENCE RESULT ({confidence.toFixed(1)}%) — This image has borderline visual features.
+              The result is uncertain. Please use a clearer, well-lit image or seek expert inspection.
+            </div>
+          </div>
+        )}
+
+        <div style={{ marginBottom: '16px' }}>
+          <div style={{ fontSize: '12px', fontWeight: 700, color: '#4b5563', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Assessment Output</div>
+          <div style={{ fontSize: '38px', fontWeight: 800, color: isLowConfidence ? '#d97706' : (isHealthy ? '#059669' : '#dc2626'), margin: '2px 0' }}>
             {result.prediction}
+            {isLowConfidence && <span style={{ fontSize: '16px', marginLeft: '10px', color: '#d97706' }}>(Low Confidence)</span>}
           </div>
         </div>
 
-        {/* Confidence Meter */}
-        <div style={{ marginBottom: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', fontWeight: 700, color: '#374151', marginBottom: '6px' }}>
-            <span>AI Confidence Meter</span>
-            <span>{confidence.toFixed(1)}%</span>
+        <div style={{ marginBottom: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>
+            <span>Confidence Score</span>
+            <span>{confidence.toFixed(2)}%</span>
           </div>
           <div className="progress-bar-bg">
             <div
               className="progress-bar-fill"
               style={{
                 width: `${Math.min(Math.max(confidence, 0), 100)}%`,
-                backgroundColor: isLowConfidence ? '#f59e0b' : (isHealthy ? '#10b981' : '#ef4444'),
+                backgroundColor: isLowConfidence ? '#f59e0b' : (isHealthy ? '#059669' : '#dc2626'),
               }}
             />
           </div>
         </div>
 
-        {/* Collapsible Details Toggle for Clean Production App Feel */}
-        <div style={{ marginTop: '16px', borderTop: '1px solid rgba(0,0,0,0.08)', paddingTop: '14px' }}>
-          <button
-            onClick={() => setShowDetails(!showDetails)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#475569',
-              fontSize: '13px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              width: '100%',
-              padding: 0
-            }}
-          >
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Info size={15} color="#059669" />
-              <span>{showDetails ? 'Hide Assessment Details' : 'View Assessment Details'}</span>
-            </span>
-            {showDetails ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </button>
-
-          {showDetails && (
-            <div style={{ marginTop: '12px', fontSize: '13px', color: '#475569', lineHeight: '1.5' }} className="animate-fade-in">
-              <div style={{ backgroundColor: '#ffffff', borderRadius: '10px', padding: '12px 14px', border: '1px solid #e2e8f0', marginBottom: '10px' }}>
-                <strong>Explanation:</strong> {result.explanation}
-              </div>
-              <div style={{ fontSize: '11px', color: '#64748b', fontStyle: 'italic' }}>
-                Classification generated by MobileNetV2 Transfer Learning CNN with 92.65% validation accuracy.
-              </div>
-            </div>
-          )}
+        <div style={{ backgroundColor: '#ffffff', borderRadius: '8px', padding: '12px 14px', border: '1px solid #e5e7eb', marginBottom: '14px', fontSize: '14px', color: '#4b5563' }}>
+          <strong>Explanation:</strong> {result.explanation}
         </div>
 
-        {/* Download CSV button */}
+        <div style={{ backgroundColor: '#fffbe6', borderLeft: '4px solid #f59e0b', padding: '10px 12px', borderRadius: '6px', fontSize: '12px', color: '#92400e', marginBottom: '16px' }}>
+          <strong>Disclaimer:</strong> This application provides AI-based image classification for demonstration and decision-support purposes. Results should not replace expert inspection or laboratory testing.
+        </div>
+
         {onDownloadCurrentCSV && (
-          <button
-            className="btn btn-secondary"
-            style={{ width: '100%', justifyContent: 'center', marginTop: '16px', backgroundColor: '#ffffff', fontSize: '13px' }}
-            onClick={onDownloadCurrentCSV}
-          >
-            <Download size={15} />
-            <span>Export Result CSV</span>
+          <button className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center' }} onClick={onDownloadCurrentCSV}>
+            <Download size={16} />
+            <span>Download Current Result CSV</span>
           </button>
         )}
       </div>
