@@ -80,3 +80,4 @@ Prediction_ID,Date,Time,Filename,Prediction,Confidence,Model,Model_Accuracy,Qual
 79,2026-10-03,12:15:38,healthy_29.jpg,HEALTHY,99.92,MobileNetV2-V2,92.65,89.6,A,High Quality
 80,2026-10-03,12:15:45,healthy_56.jpg,HEALTHY,99.3,MobileNetV2-V2,92.65,85.7,A,High Quality
 81,2026-10-03,12:16:07,healthy_72.jpg,HEALTHY,99.83,MobileNetV2-V2,92.65,82.8,A,High Quality
+82,2026-10-05,21:21:00,fungal_004.jpg,FUNGAL,90.23,MobileNetV2-V2,92.65,91.3,C,Low Quality

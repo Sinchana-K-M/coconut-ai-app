@@ -19,7 +19,6 @@ import Reports from './components/Reports';
 import AuthModal from './components/AuthModal';
 import FinancialYieldCard from './components/FinancialYieldCard';
 import MoldTreatmentCard from './components/MoldTreatmentCard';
-import FarmerIndustryCard from './components/FarmerIndustryCard';
 
 import {
   getHealthStatus,
@@ -201,7 +200,6 @@ export default function App() {
               <>
                 <QualityGrade result={predictionResult} />
 
-                <FarmerIndustryCard result={predictionResult} />
                 <FinancialYieldCard yieldData={predictionResult.yield_analysis} />
                 <MoldTreatmentCard moldData={predictionResult.mold_analysis} isFungal={predictionResult.prediction === 'FUNGAL'} />
               </>
@@ -244,7 +242,6 @@ export default function App() {
               <>
                 <QualityGrade result={predictionResult} />
 
-                <FarmerIndustryCard result={predictionResult} />
                 <FinancialYieldCard yieldData={predictionResult.yield_analysis} />
                 <MoldTreatmentCard moldData={predictionResult.mold_analysis} isFungal={predictionResult.prediction === 'Fungal' || predictionResult.prediction === 'FUNGAL'} />
               </>
