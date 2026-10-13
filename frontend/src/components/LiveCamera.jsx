@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Camera, CameraOff, RefreshCw, Sparkles, AlertCircle, CheckCircle2, Video } from 'lucide-react';
 import PredictionCard from './PredictionCard';
 import QualityGrade from './QualityGrade';
-import FinancialYieldCard from './FinancialYieldCard';
 import MoldTreatmentCard from './MoldTreatmentCard';
 import GradCAM from './GradCAM';
 import { predictCoconutImage, updateGradCAM, downloadHistoryCSV } from '../api';
@@ -373,7 +372,6 @@ export default function LiveCamera({ onPredictionComplete }) {
             gradeLabel={predictionResult.quality_grade_label}
             factors={predictionResult.quality_factors}
           />
-          <FinancialYieldCard yieldData={predictionResult.yield_analysis} />
           <MoldTreatmentCard moldData={predictionResult.mold_analysis} isFungal={predictionResult.prediction === 'FUNGAL'} />
         </>
       )}
