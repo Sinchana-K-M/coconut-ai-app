@@ -103,19 +103,37 @@ def download_from_gdrive(file_id, dest_path):
 
 def download_model_if_missing():
     """
-    Main entry point. Downloads the Keras model from Google Drive
-    if it does not already exist at MODEL_SAVE_PATH.
+    Main entry point. Checks if the model already exists in backend/ or root directory.
+    Only attempts download from Google Drive if completely missing from disk.
     """
-    if os.path.exists(MODEL_SAVE_PATH):
-        size_mb = os.path.getsize(MODEL_SAVE_PATH) / (1024 * 1024)
-        if size_mb >= 1.0:
-            print(f"[download_model] Model already exists ({size_mb:.1f} MB) — skipping download.")
-            return True
-        else:
-            print(f"[download_model] Existing file too small ({size_mb:.1f} MB) — re-downloading...")
-            os.remove(MODEL_SAVE_PATH)
+    # Check if model exists in backend or root directory
+    candidates = [
+        MODEL_SAVE_PATH,
+        os.path.join(ROOT_DIR, "coconut_fungal_model_v2.keras"),
+        os.path.join(".", "coconut_fungal_model_v2.keras")
+    ]
+    for check_path in candidates:
+        if os.path.exists(check_path):
+            size_mb = os.path.getsize(check_path) / (1024 * 1024)
+            if size_mb >= 1.0:
+                print(f"[download_model] Model already exists ({size_mb:.1f} MB) at {check_path} — skipping download.")
+                # Copy to MODEL_SAVE_PATH if not there so both locations have it
+                if check_path != MODEL_SAVE_PATH and not os.path.exists(MODEL_SAVE_PATH):
+                    try:
+                        import shutil
+                        shutil.copyfile(check_path, MODEL_SAVE_PATH)
+                        print(f"[download_model] Mirrored model file to {MODEL_SAVE_PATH}")
+                    except Exception as e:
+                        print(f"[download_model] Warning copying model: {e}")
+                return True
+            else:
+                print(f"[download_model] Existing file too small ({size_mb:.1f} MB) at {check_path} — removing...")
+                try:
+                    os.remove(check_path)
+                except Exception:
+                    pass
 
-    print(f"[download_model] Model not found at {MODEL_SAVE_PATH}")
+    print(f"[download_model] Model not found in disk candidates.")
     print(f"[download_model] Downloading from Google Drive...")
 
     os.makedirs(os.path.dirname(MODEL_SAVE_PATH), exist_ok=True)

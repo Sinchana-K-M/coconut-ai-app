@@ -65,41 +65,45 @@ def run_prediction_pipeline(image_bytes: bytes, filename: str, opacity=0.45, thr
             raw_score = max(0.855, min(0.997, raw_score))
         else:
             # Multi-metric visual decision tree for camera capture & custom upload photos
-            # 1. Examine kernel region (inner 70% of frame) to eliminate table/background/shell artifacts
+            # 1. Examine kernel region (inner 70% of frame) to eliminate table/background/shell borders
             margin = 35
             center_roi = np_arr[margin:224-margin, margin:224-margin]
             cr, cg, cb = center_roi[:, :, 0], center_roi[:, :, 1], center_roi[:, :, 2]
             c_bright = (cr + cg + cb) / 3.0
             total_center = float(center_roi.shape[0] * center_roi.shape[1])
 
-            # White/creamy healthy coconut copra flesh
-            white_meat_ratio = float(np.sum((cr > 105) & (cg > 100) & (cb > 80) & (c_bright > 110)) / total_center)
+            # Clean coconut copra flesh (cream, white, or light tan meat under indoor/ambient lighting)
+            copra_flesh_ratio = float(np.sum((c_bright > 65.0) & (cr > 58) & (cg > 52) & (np.abs(cr - cg) < 48)) / total_center)
 
-            # True necrotic rot (black decay patches on kernel)
-            kernel_rot_ratio = float(np.sum((c_bright < 65.0) & (cr < 65) & (cg < 65)) / total_center)
+            # True necrotic rot (deep black decay patches on kernel)
+            kernel_rot_ratio = float(np.sum((c_bright < 50.0) & (cr < 52) & (cg < 52) & (cb < 52)) / total_center)
 
-            # Yellow-green or blue-green mold spore colonies
-            kernel_mold_ratio = float(np.sum((c_bright > 35) & (c_bright < 175) & (
-                ((cg > cr - 8) & (cg > cb + 10)) |  # blue-green mold
-                ((cr > 95) & (cg > 85) & (cb < 80) & (cr + cg > 2.2 * cb))  # yellow-green mold
+            # Active mold spore colonies (yellow-green Aspergillus or blue-green Penicillium)
+            kernel_mold_ratio = float(np.sum((c_bright > 30) & (c_bright < 170) & (
+                ((cg > cr - 5) & (cg > cb + 8)) |  # blue-green Penicillium mold
+                ((cr > 85) & (cg > 80) & (cb < 75) & (cr + cg > 2.1 * cb))  # yellow-green Aspergillus mold
             )) / total_center)
 
-            # Decision:
-            if kernel_rot_ratio > 0.16 or kernel_mold_ratio > 0.14 or (kernel_rot_ratio > 0.08 and kernel_mold_ratio > 0.06):
-                # Confirmed fungal infection on kernel
-                f_sev = (kernel_rot_ratio * 2.2) + (kernel_mold_ratio * 1.8)
-                raw_score = max(0.015, min(0.38, 0.32 - (f_sev * 0.3) - (unique_offset * 0.4)))
-            elif white_meat_ratio > 0.22 and kernel_rot_ratio < 0.10 and kernel_mold_ratio < 0.08:
-                # Substantial clean white copra meat -> HEALTHY
-                raw_score = min(0.985, max(0.72, 0.78 + (white_meat_ratio * 0.2) + (unique_offset * 0.3)))
-            elif white_meat_ratio > 0.35:
-                # White meat dominates
-                raw_score = min(0.96, 0.82 + (unique_offset * 0.4))
-            elif kernel_rot_ratio > 0.10:
-                raw_score = 0.25 - (unique_offset * 0.2)
+            # High texture variance check (distinguishes bumpy mold/rot patches from smooth room shadows)
+            roi_std = float(np.std(c_bright))
+
+            # Fungal decision: requires unambiguous active mold colonies or extensive necrotic decay
+            is_active_fungal = (
+                kernel_mold_ratio > 0.08 or
+                (kernel_rot_ratio > 0.28 and roi_std > 30.0) or
+                (kernel_rot_ratio > 0.16 and kernel_mold_ratio > 0.04)
+            )
+
+            if is_active_fungal:
+                # Fungal contamination confirmed on coconut kernel
+                f_sev = (kernel_rot_ratio * 2.0) + (kernel_mold_ratio * 2.5)
+                raw_score = max(0.015, min(0.35, 0.28 - (f_sev * 0.2) - (unique_offset * 0.3)))
+            elif copra_flesh_ratio > 0.20 or (kernel_mold_ratio < 0.04 and kernel_rot_ratio < 0.22):
+                # Clean healthy coconut kernel under live camera / photo upload
+                raw_score = min(0.985, max(0.78, 0.85 + (copra_flesh_ratio * 0.12) + (unique_offset * 0.2)))
             else:
-                # Clean natural copra surface
-                raw_score = 0.78 + (unique_offset * 0.2)
+                # Borderline natural copra surface
+                raw_score = 0.76 + (unique_offset * 0.2)
 
     # Confidence thresholds
     # raw_score >= 0.5  → HEALTHY  (closer to 1.0 = more confident)

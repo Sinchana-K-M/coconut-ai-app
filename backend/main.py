@@ -140,6 +140,67 @@ async def health_check():
     }
 
 
+@app.get("/api/debug-model")
+async def debug_model():
+    """Detailed diagnostics of model file paths and TensorFlow loading on server."""
+    import sys
+    results = {
+        "cwd": os.getcwd(),
+        "backend_dir": BACKEND_DIR,
+        "sys_path": sys.path[:5],
+        "candidates": {},
+        "env_port": os.environ.get("PORT", "not set"),
+    }
+    candidates = [
+        ("MODEL_PATH_BACKEND_ABS", model_service.MODEL_PATH_BACKEND_ABS),
+        ("MODEL_PATH_ROOT_ABS", model_service.MODEL_PATH_ROOT_ABS),
+        ("MODEL_PATH_PRIMARY", model_service.MODEL_PATH_PRIMARY),
+        ("MODEL_PATH_FALLBACK", model_service.MODEL_PATH_FALLBACK),
+    ]
+    for name, path in candidates:
+        exists = os.path.exists(path)
+        size = os.path.getsize(path) if exists else 0
+        results["candidates"][name] = {
+            "path": path,
+            "exists": exists,
+            "size_mb": round(size / (1024 * 1024), 2)
+        }
+
+    # Files in backend dir and cwd
+    try:
+        results["files_in_backend"] = os.listdir(BACKEND_DIR)
+    except Exception as e:
+        results["files_in_backend"] = str(e)
+
+    try:
+        results["files_in_cwd"] = os.listdir(".")
+    except Exception as e:
+        results["files_in_cwd"] = str(e)
+
+    # Attempt load
+    target = None
+    for name, path in candidates:
+        if os.path.exists(path) and os.path.getsize(path) > 1024 * 1024:
+            target = path
+            break
+    results["selected_target"] = target
+
+    if target:
+        try:
+            import tensorflow as tf
+            results["tf_version"] = tf.__version__
+            m = tf.keras.models.load_model(target)
+            results["load_status"] = "SUCCESS"
+            results["model_name"] = m.name
+            results["model_layers"] = len(m.layers)
+        except Exception as e:
+            results["load_status"] = f"FAILED: {type(e).__name__}: {str(e)}"
+    else:
+        results["load_status"] = "NO_TARGET_FILE_FOUND"
+
+    return results
+
+
 @app.post("/api/predict")
 async def predict_image(
     file: UploadFile = File(...),

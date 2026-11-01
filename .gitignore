@@ -26,6 +26,7 @@ images/
 *.keras
 *.h5
 !backend/coconut_fungal_model_v2.keras
+!coconut_fungal_model_v2.keras
 
 
 # Uploads (user files — don't commit)
