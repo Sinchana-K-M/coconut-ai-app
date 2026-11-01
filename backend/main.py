@@ -131,10 +131,12 @@ async def login(req: UserLoginRequest):
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint returning model version and fixed test accuracy."""
+    is_loaded = (model_service.get_model() is not None)
     return {
         "status": "healthy",
         "model": "MobileNetV2-V2",
-        "accuracy": 92.65
+        "accuracy": 92.65,
+        "model_loaded": is_loaded
     }
 
 

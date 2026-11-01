@@ -22,10 +22,10 @@ dataset/
 bad_images/
 images/
 
-# ML model files — too large for git push over slow connections
-# Model is downloaded on Railway startup via download_model.py
+# ML model files
 *.keras
 *.h5
+!backend/coconut_fungal_model_v2.keras
 
 
 # Uploads (user files — don't commit)
